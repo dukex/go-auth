@@ -3,11 +3,16 @@ package login2
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 
 	"code.google.com/p/goauth2/oauth"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 )
+
+var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 
 type Provider struct {
 	Name        string
@@ -30,7 +35,12 @@ type Builder struct {
 }
 
 type User struct {
-	Email string
+	Id     int64
+	Email  string
+	Link   string
+	Name   string
+	Gender string
+	Locale string
 }
 
 func NewBuilder(userProviders []*Provider) *Builder {
@@ -61,16 +71,19 @@ func NewBuilder(userProviders []*Provider) *Builder {
 func (b *Builder) Router(r *mux.Router) {
 	for provider, _ := range b.Providers {
 		r.HandleFunc("/auth/"+provider, b.Authorize(provider))
-
-		r.HandleFunc("/auth/callback/{provider}", func(w http.ResponseWriter, request *http.Request) {
-			vars := mux.Vars(request)
-			provider := vars["provider"]
-
-			user := b.Callback(provider, request)
-			fmt.Println(provider, user)
-		})
 	}
 
+	r.HandleFunc("/auth/callback/{provider}", func(w http.ResponseWriter, request *http.Request) {
+		vars := mux.Vars(request)
+		provider := vars["provider"]
+
+		user := b.Callback(provider, request)
+
+		session, _ := store.Get(request, "_session")
+		session.Values["user_id"] = user.Id
+
+		session.Save(request, w)
+	})
 }
 func (b *Builder) Authorize(provider string) func(w http.ResponseWriter, r *http.Request) {
 	config := b.Providers[provider]
