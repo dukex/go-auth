@@ -2,6 +2,10 @@
 
 ## USAGE
 
+``` bash
+$ export SESSION_SECRET="secret session key"
+```
+
 ``` go
 package main
 
