@@ -2,8 +2,8 @@ package login2
 
 import (
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	//"fmt"
+	//"io/ioutil"
 	"net/http"
 	"os"
 
@@ -31,11 +31,12 @@ type BuilderConfig struct {
 }
 
 type Builder struct {
-	Providers map[string]*BuilderConfig
+	Providers   map[string]*BuilderConfig
+	SetupUserFn func(provider string, user *User, rawResponde *http.Response)
 }
 
 type User struct {
-	Id     int64
+	Id     string
 	Email  string
 	Link   string
 	Name   string
@@ -43,9 +44,10 @@ type User struct {
 	Locale string
 }
 
-func NewBuilder(userProviders []*Provider) *Builder {
+func NewBuilder(userProviders []*Provider, setupUserFn func(provider string, user *User, rawResponde *http.Response)) *Builder {
 	builder := new(Builder)
 	builder.Providers = make(map[string]*BuilderConfig, 0)
+	builder.SetupUserFn = setupUserFn
 
 	for _, p := range userProviders {
 		config := &oauth.Config{
@@ -108,5 +110,7 @@ func (b *Builder) Callback(provider string, r *http.Request) User {
 	if err != nil {
 		panic(err)
 	}
+
+	b.SetupUserFn(provider, &user, responseAuth)
 	return user
 }

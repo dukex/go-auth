@@ -11,12 +11,17 @@ package main
 
 import (
   "os"
+  "net/http"
 
   auth "github.com/dukex/login2"
   "github.com/gorilla/mux"
 )
 
 var builder auth.Builder
+
+func setupUser(provider string, user *auth.User, rawResponse *http.Response){
+  ... Find and Create the User ...
+}
 
 func configAuth() {
   providers := make([]*auth.Provider, 0)
@@ -32,7 +37,7 @@ func configAuth() {
     UserInfoURL: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
   })
 
-  builder = auth.NewBuilder(providers)
+  builder = auth.NewBuilder(providers, setupUser)
 }
 
 
