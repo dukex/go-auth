@@ -1,3 +1,6 @@
+// Package login2 provides sign in and sign up by oauth2 and email and password.
+// Inspired in omniauth and devise gem
+//
 package login2
 
 import (
@@ -14,6 +17,16 @@ import (
 
 var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 
+// Provider is a oauth2 provider, like facebook or google
+// Name is provider name, it's like a key, will can be use it after,
+// the package only use it as a index.
+// Key is oauth2 key
+// Secret is oauth2 secret key
+// RedirectURL is a url will config on provider
+// TokenURL is a URL to get the token on provider
+// AuthURL is a URL to auth user on provider
+// UserInfoURL is a URL to get User Information on provider
+// Scope is whats the scope your app wants
 type Provider struct {
 	Name        string
 	Key         string
