@@ -186,11 +186,11 @@ func (b *Builder) SignIn() func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func (b *Builder) Protected(fn func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+func (b *Builder) Protected(fn func(string, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := b.CurrentUser(r)
 		if userID != "" {
-			fn(w, r)
+			fn(userID, w, r)
 		} else {
 			http.Redirect(w, r, b.URLS.SignIn, 302)
 		}
