@@ -104,7 +104,7 @@ func (b *Builder) Router(r *mux.Router) {
 	r.HandleFunc("/auth/callback/{provider}", b.OAuthLogin()).Methods("GET")
 	r.HandleFunc("/users/sign_in", b.SignIn()).Methods("POST")
 	r.HandleFunc("/users/sign_up", b.SignUp()).Methods("POST")
-
+	r.HandleFunc("/users/sign_out", b.SignOut()).Methods("GET")
 }
 
 // HTTP server
@@ -186,6 +186,16 @@ func (b *Builder) SignIn() func(http.ResponseWriter, *http.Request) {
 			userId, _ := b.UserIdByEmail(email)
 			b.login(r, w, strconv.FormatInt(userId, 10))
 		}
+	}
+}
+
+func (b *Builder) SignOut() func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "_session")
+		session.Values["user_id"] = nil
+		session.Save(r, w)
+
+		http.Redirect(w, r, b.URLS.SignIn, 302)
 	}
 }
 
