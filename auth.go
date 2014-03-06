@@ -5,6 +5,7 @@ package login2
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -115,6 +116,7 @@ func (b *Builder) OAuthAuthorize(provider string) func(http.ResponseWriter, *htt
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		url := config.Auth.AuthCodeURL("")
+		log.Println("Send user to", provider)
 		http.Redirect(w, r, url, http.StatusFound)
 	}
 }
