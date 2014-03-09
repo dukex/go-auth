@@ -100,9 +100,9 @@ func NewBuilder(userProviders []*Provider) *Builder {
 func (b *Builder) Router(r *mux.Router) {
 	for provider, _ := range b.Providers {
 		r.HandleFunc("/auth/"+provider, b.OAuthAuthorize(provider)).Methods("GET")
+		r.HandleFunc("/auth/callback/"+provider, b.OAuthLogin(provider)).Methods("GET")
 	}
 
-	r.HandleFunc("/auth/callback/{provider}", b.OAuthLogin()).Methods("GET")
 	r.HandleFunc("/users/sign_in", b.SignIn()).Methods("POST")
 	r.HandleFunc("/users/sign_up", b.SignUp()).Methods("POST")
 	r.HandleFunc("/users/sign_out", b.SignOut()).Methods("GET")
@@ -121,11 +121,8 @@ func (b *Builder) OAuthAuthorize(provider string) func(http.ResponseWriter, *htt
 	}
 }
 
-func (b *Builder) OAuthLogin() func(http.ResponseWriter, *http.Request) {
+func (b *Builder) OAuthLogin(provider string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, request *http.Request) {
-		vars := mux.Vars(request)
-		provider := vars["provider"]
-
 		userId, err := b.OAuthCallback(provider, request)
 
 		if err != nil {
