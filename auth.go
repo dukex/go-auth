@@ -59,7 +59,7 @@ type Builder struct {
 	UserExistsFn        func(email string) bool
 	UserCreateFn        func(email string, password string, request *http.Request) (int64, error)
 	UserIdByEmail       func(email string) (int64, error)
-	UserPasswordByEmail func(email string) (string, error)
+	UserPasswordByEmail func(email string) (string, bool)
 	URLS                URLS
 }
 
@@ -175,13 +175,13 @@ func (b *Builder) SignIn() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
 		password := r.FormValue("password")
-		userPassword, err := b.UserPasswordByEmail(email)
+		userPassword, ok := b.UserPasswordByEmail(email)
 
-		if err != nil {
+		if !ok {
 			http.Redirect(w, r, b.URLS.Redirect, 302)
 		}
 
-		err = checkPassword(userPassword, password)
+		err := checkPassword(userPassword, password)
 		if err != nil {
 			http.Redirect(w, r, b.URLS.Redirect, 302)
 		} else {
