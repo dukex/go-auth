@@ -175,12 +175,12 @@ func (b *Builder) SignIn() func(http.ResponseWriter, *http.Request) {
 		userPassword, ok := b.UserPasswordByEmail(email)
 
 		if !ok {
-			http.Redirect(w, r, b.URLS.Redirect, 302)
+			http.Redirect(w, r, b.URLS.SignIn+"?password=not_found", 302)
 		}
 
 		err := checkPassword(userPassword, password)
 		if err != nil {
-			http.Redirect(w, r, b.URLS.Redirect, 302)
+			http.Redirect(w, r, b.URLS.SignIn+"?password=no_match", 302)
 		} else {
 			userId, _ := b.UserIdByEmail(email)
 			b.login(r, w, strconv.FormatInt(userId, 10))
