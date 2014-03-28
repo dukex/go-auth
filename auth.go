@@ -209,6 +209,9 @@ func (b *Builder) Protected(fn func(string, http.ResponseWriter, *http.Request))
 		if userID != "" {
 			fn(userID, w, r)
 		} else {
+			session, _ := store.Get(r, "_session")
+			session.Values["return_to"] = r.URL.String()
+			session.Save(r, w)
 			http.Redirect(w, r, b.URLS.SignIn, http.StatusTemporaryRedirect)
 		}
 	}
@@ -219,9 +222,17 @@ func (b *Builder) Protected(fn func(string, http.ResponseWriter, *http.Request))
 func (b *Builder) login(r *http.Request, w http.ResponseWriter, userId string) {
 	session, _ := store.Get(r, "_session")
 	session.Values["user_id"] = userId
-	session.Save(r, w)
 
-	http.Redirect(w, r, b.URLS.Redirect, 302)
+	var returnTo string
+	returnToSession := session.Values["return_to"]
+	returnTo, ok := returnToSession.(string)
+	if !ok {
+		returnTo = b.URLS.Redirect
+	}
+
+	session.Values["return_to"] = nil
+	session.Save(r, w)
+	http.Redirect(w, r, returnTo, 302)
 }
 
 func (b *Builder) CurrentUser(r *http.Request) string {
