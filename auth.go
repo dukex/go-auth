@@ -158,7 +158,11 @@ func (b *Builder) SignUp() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, request *http.Request) {
 		email := request.FormValue("email")
 		password := request.FormValue("password")
-		hpassword := generatePassword(password)
+		hpassword, err := generatePassword(password)
+		if err != nil {
+			http.Redirect(w, request, b.URLS.SignUp+"?password=error", http.StatusTemporaryRedirect)
+			return
+		}
 
 		userID, err := b.UserCreateFn(email, hpassword, request)
 		if err != nil {
@@ -227,9 +231,9 @@ func (b *Builder) CurrentUser(r *http.Request) string {
 	return id
 }
 
-func generatePassword(password string) string {
-	h, _ := bcrypt.GenerateFromPassword([]byte(password), 0)
-	return string(h[:])
+func generatePassword(password string) (string, error) {
+	h, err := bcrypt.GenerateFromPassword([]byte(password), 0)
+	return string(h[:]), err
 }
 
 func checkPassword(hashedPassword, password string) error {
