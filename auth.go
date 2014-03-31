@@ -56,7 +56,6 @@ type URLS struct {
 type Builder struct {
 	Providers           map[string]*builderConfig
 	UserSetupFn         func(provider string, user *User, rawResponde *http.Response) (int64, error)
-	UserExistsFn        func(email string) bool
 	UserCreateFn        func(email string, password string, request *http.Request) (int64, error)
 	UserIdByEmail       func(email string) (int64, error)
 	UserPasswordByEmail func(email string) (string, bool)
@@ -73,11 +72,19 @@ type User struct {
 	Picture string
 }
 
-func NewBuilder(userProviders []*Provider) *Builder {
+func NewBuilder() *Builder {
 	builder := new(Builder)
 	builder.Providers = make(map[string]*builderConfig, 0)
+	return builder
+}
 
-	for _, p := range userProviders {
+func (b *Builder) NewProviders(providers []*Provider) {
+	for _, p := range providers {
+		b.AddProvider(p)
+	}
+}
+
+func (b *Builder) NewProvider(p *Provider) {
 		config := &oauth.Config{
 			ClientId:     p.Key,
 			ClientSecret: p.Secret,
@@ -92,10 +99,7 @@ func NewBuilder(userProviders []*Provider) *Builder {
 		provider.Auth = config
 		provider.UserInfoURL = p.UserInfoURL
 
-		builder.Providers[p.Name] = provider
-	}
-
-	return builder
+		b.Providers[p.Name] = provider
 }
 
 func (b *Builder) Router(r *mux.Router) {
