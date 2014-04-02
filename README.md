@@ -102,6 +102,15 @@ UserRememberPasswordFn func(token int64, email string)
 ```
 TODO
 
+## CurrentUser
+
+CurrentUser func expect you send the request(```http.Request```) and return the user id as string and error(nil if is OK)
+
+``` go
+(b *Builder) CurrentUser(r *http.Request) (string, error)
+```
+
+
 ## HTTP
 
 Login2 provide some http handlers
