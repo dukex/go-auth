@@ -4,11 +4,14 @@
 package login2
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"code.google.com/p/go.crypto/bcrypt"
 	"code.google.com/p/goauth2/oauth"
@@ -48,15 +51,17 @@ type builderConfig struct {
 // URLS
 
 type URLS struct {
-	Redirect string
-	SignIn   string
-	SignUp   string
+	Redirect             string
+	SignIn               string
+	SignUp               string
+	ResetPasswordSuccess string
 }
 
 type Builder struct {
 	Providers           map[string]*builderConfig
 	UserSetupFn         func(provider string, user *User, rawResponde *http.Response) (int64, error)
 	UserCreateFn        func(email string, password string, request *http.Request) (int64, error)
+	UserResetPasswordFn func(token string, email string)
 	UserIdByEmail       func(email string) (int64, error)
 	UserPasswordByEmail func(email string) (string, bool)
 	URLS                URLS
@@ -80,26 +85,26 @@ func NewBuilder() *Builder {
 
 func (b *Builder) NewProviders(providers []*Provider) {
 	for _, p := range providers {
-		b.AddProvider(p)
+		b.NewProvider(p)
 	}
 }
 
 func (b *Builder) NewProvider(p *Provider) {
-		config := &oauth.Config{
-			ClientId:     p.Key,
-			ClientSecret: p.Secret,
-			RedirectURL:  p.RedirectURL,
-			Scope:        p.Scope,
-			AuthURL:      p.AuthURL,
-			TokenURL:     p.TokenURL,
-			TokenCache:   oauth.CacheFile("cache-" + p.Name + ".json"),
-		}
+	config := &oauth.Config{
+		ClientId:     p.Key,
+		ClientSecret: p.Secret,
+		RedirectURL:  p.RedirectURL,
+		Scope:        p.Scope,
+		AuthURL:      p.AuthURL,
+		TokenURL:     p.TokenURL,
+		TokenCache:   oauth.CacheFile("cache-" + p.Name + ".json"),
+	}
 
-		provider := new(builderConfig)
-		provider.Auth = config
-		provider.UserInfoURL = p.UserInfoURL
+	provider := new(builderConfig)
+	provider.Auth = config
+	provider.UserInfoURL = p.UserInfoURL
 
-		b.Providers[p.Name] = provider
+	b.Providers[p.Name] = provider
 }
 
 func (b *Builder) Router(r *mux.Router) {
@@ -111,6 +116,7 @@ func (b *Builder) Router(r *mux.Router) {
 	r.HandleFunc("/users/sign_in", b.SignIn()).Methods("POST")
 	r.HandleFunc("/users/sign_up", b.SignUp()).Methods("POST")
 	r.HandleFunc("/users/sign_out", b.SignOut()).Methods("GET")
+	r.HandleFunc("/password/reset", b.ResetPassword()).Methods("POST")
 }
 
 // HTTP server
@@ -162,7 +168,7 @@ func (b *Builder) SignUp() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, request *http.Request) {
 		email := request.FormValue("email")
 		password := request.FormValue("password")
-		hpassword, err := generatePassword(password)
+		hpassword, err := generateHash(password)
 		if err != nil {
 			http.Redirect(w, request, b.URLS.SignUp+"?password=error", http.StatusTemporaryRedirect)
 			return
@@ -187,7 +193,7 @@ func (b *Builder) SignIn() func(http.ResponseWriter, *http.Request) {
 			http.Redirect(w, r, b.URLS.SignIn+"?user=not_found", http.StatusTemporaryRedirect)
 		}
 
-		err := checkPassword(userPassword, password)
+		err := checkHash(userPassword, password)
 		if err != nil {
 			http.Redirect(w, r, b.URLS.SignIn+"?user=no_match", http.StatusTemporaryRedirect)
 		} else {
@@ -209,8 +215,8 @@ func (b *Builder) SignOut() func(http.ResponseWriter, *http.Request) {
 
 func (b *Builder) Protected(fn func(string, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID := b.CurrentUser(r)
-		if userID != "" {
+		userID, ok := b.CurrentUser(r)
+		if ok {
 			fn(userID, w, r)
 		} else {
 			session, _ := store.Get(r, "_session")
@@ -218,6 +224,16 @@ func (b *Builder) Protected(fn func(string, http.ResponseWriter, *http.Request))
 			session.Save(r, w)
 			http.Redirect(w, r, b.URLS.SignIn, http.StatusTemporaryRedirect)
 		}
+	}
+}
+
+func (b *Builder) ResetPassword() func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		email := r.FormValue("email")
+		hash, _ := generateHash(strconv.Itoa(int(generateToken())))
+		token := base64.URLEncoding.EncodeToString([]byte(hash))
+		go b.UserResetPasswordFn(token, email)
+		http.Redirect(w, r, b.URLS.ResetPasswordSuccess, http.StatusTemporaryRedirect)
 	}
 }
 
@@ -239,18 +255,23 @@ func (b *Builder) login(r *http.Request, w http.ResponseWriter, userId string) {
 	http.Redirect(w, r, returnTo, 302)
 }
 
-func (b *Builder) CurrentUser(r *http.Request) string {
+func (b *Builder) CurrentUser(r *http.Request) (id string, ok bool) {
 	session, _ := store.Get(r, "_session")
 	userId := session.Values["user_id"]
-	id, _ := userId.(string)
-	return id
+	id, ok = userId.(string)
+	return
 }
 
-func generatePassword(password string) (string, error) {
-	h, err := bcrypt.GenerateFromPassword([]byte(password), 0)
+func generateHash(data string) (string, error) {
+	h, err := bcrypt.GenerateFromPassword([]byte(data), 0)
 	return string(h[:]), err
 }
 
-func checkPassword(hashedPassword, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+func checkHash(hashed, plain string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain))
+}
+
+func generateToken() int64 {
+	rand.Seed(time.Now().Unix())
+	return rand.Int63()
 }

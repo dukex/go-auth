@@ -62,6 +62,9 @@ loginBuilder.UserIdByEmail = func(email string) (int64, error) {
 
 loginBuilder.UserPasswordByEmail = func(email string) (string, error) {
 }
+
+loginBuilder.UserResetPasswordFn = func(token string, email string) {
+}
 ```
 
 Follow the callbacks documentation:
@@ -96,18 +99,18 @@ UserPasswordByEmail func(email string) (string, bool)
 
 Called when user sign in by email/password to get user password and check with inputed password, the method will send user email as string and expect the user password as string
 
-### UserRememberPasswordFn
+### UserResetPasswordFn
 ``` go
-UserRememberPasswordFn func(token int64, email string)
+UserResetPasswordFn func(token string, email string)
 ```
 TODO
 
 ## CurrentUser
 
-CurrentUser func expect you send the request(```http.Request```) and return the user id as string and error(nil if is OK)
+CurrentUser func expect you send the request(```http.Request```) and return the user id as string and bool true if is OK
 
 ``` go
-(b *Builder) CurrentUser(r *http.Request) (string, error)
+(b *Builder) CurrentUser(r *http.Request) (string, bool)
 ```
 
 
@@ -168,9 +171,10 @@ To http handlers works you need config your URLs, login2 has URL type:
 
 ``` go
 type URLS struct {
-  Redirect string
-  SignIn   string
-  SignUp   string
+  Redirect                string
+  SignIn                  string
+  SignUp                  string
+  ResetPasswordSuccess    string
 }
 ```
 
@@ -181,6 +185,7 @@ loginBuilder.URLS = login2.URLS{
   Redirect: "/dashbaord",
   SignIn:    "/login",
   SignUp:  "/register",
+  ResetPasswordSuccess: "/reset_password_success"
 }
 ```
 After your sign or sign up login2 will send user to ```Redirect``` url.
@@ -188,6 +193,8 @@ After your sign or sign up login2 will send user to ```Redirect``` url.
 When login2 need sign in user, e.g User trying access protected path, login2 will send user to ```SignIn``` url.
 
 When login2 need send up user, login2 will send user to ```SignUp``` url.
+
+TODO: ResetPasswordSuccess
 
 ##### Getting Errors
 TODO
