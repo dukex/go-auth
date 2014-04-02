@@ -3,7 +3,7 @@
 Easy way to sign in and sign up users using oauth and email/password
 
 
-```
+``` go
 var loginBuilder *login2.Builder
 loginBuilder = login2.NewBuilder()
 ```
@@ -12,7 +12,7 @@ loginBuilder = login2.NewBuilder()
 
 To config your oauth provider use ```NewProvider``` func
 
-```
+``` go
 provider := &login2.Provider{
   RedirectURL: os.Getenv("GOOGLE_CALLBACK_URL"),
   AuthURL:     "https://accounts.google.com/o/oauth2/auth",
@@ -30,7 +30,7 @@ loginBuilder.NewProvider(provider)
 The func ```NewProviders``` accept a ```Provider``` array
 
 
-```
+``` go
 providers := make([]*login2.Provider, 0)
 
 providers = append(providers, &auth.Provider{
@@ -50,7 +50,7 @@ loginBuilder.NewProviders(providers)
 
 Login2 works with callback to be a agnostic way to sign in and sign up users, ```login2.Builder``` accept 4 callbacks
 
-```
+```  go
 loginBuilder.UserSetupFn = func(provider string, user *auth.User, rawResponde *http.Response) (int64, error)  {
 }
 
@@ -68,7 +68,7 @@ Follow the callbacks documentation:
 
 ### UserSetupFn
 
-```
+``` go
 UserSetupFn         func(provider string, user *login2.User, rawResponse *http.Response) (int64, error)
 ```
 
@@ -76,26 +76,31 @@ Called when user return from oauth provider, this method will send a provider or
 
 
 ### UserCreateFn
-```
+``` go
 UserCreateFn        func(email string, password string, request *http.Request) (int64, error)
 ```
 
 Called when user sign up by email/password, the method will send email and password as string, password is encrypted hash, and expect the user id as int64
 
 ### UserIdByEmail
-```
+``` go
 UserIdByEmail       func(email string) (int64, error)
 ```
 
 Called when user sign in by email/password to get the user id by email after check the password with ```UserPasswordByEmail```, the method will send the user email as string and expect the user id as int64
 
 ### UserPasswordByEmail
-```
+``` go
 UserPasswordByEmail func(email string) (string, bool)
 ```
 
 Called when user sign in by email/password to get user password and check with inputed password, the method will send user email as string and expect the user password as string
 
+### UserRememberPasswordFn
+``` go
+UserRememberPasswordFn func(token int64, email string)
+```
+TODO
 
 ## HTTP
 
@@ -152,7 +157,7 @@ GET   /dashboard   Protected(DashboardHandle)
 
 To http handlers works you need config your URLs, login2 has URL type:
 
-```
+``` go
 type URLS struct {
   Redirect string
   SignIn   string
@@ -162,7 +167,7 @@ type URLS struct {
 
 And ```Builder``` has URLS field
 
-```
+``` go
 loginBuilder.URLS = login2.URLS{
   Redirect: "/dashbaord",
   SignIn:    "/login",
