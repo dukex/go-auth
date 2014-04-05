@@ -168,7 +168,7 @@ func (b *Builder) SignUp() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, request *http.Request) {
 		email := request.FormValue("email")
 		password := request.FormValue("password")
-		hpassword, err := generateHash(password)
+		hpassword, err := GenerateHash(password)
 		if err != nil {
 			http.Redirect(w, request, b.URLS.SignUp+"?password=error", http.StatusTemporaryRedirect)
 			return
@@ -230,7 +230,7 @@ func (b *Builder) Protected(fn func(string, http.ResponseWriter, *http.Request))
 func (b *Builder) ResetPassword() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
-		hash, _ := generateHash(strconv.Itoa(int(generateToken())))
+		hash, _ := GenerateHash(strconv.Itoa(int(generateToken())))
 		token := base64.URLEncoding.EncodeToString([]byte(hash))
 		go b.UserResetPasswordFn(token, email)
 		http.Redirect(w, r, b.URLS.ResetPasswordSuccess, http.StatusTemporaryRedirect)
@@ -262,7 +262,7 @@ func (b *Builder) CurrentUser(r *http.Request) (id string, ok bool) {
 	return
 }
 
-func generateHash(data string) (string, error) {
+func GenerateHash(data string) (string, error) {
 	h, err := bcrypt.GenerateFromPassword([]byte(data), 0)
 	return string(h[:]), err
 }
