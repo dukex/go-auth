@@ -68,11 +68,6 @@ loginBuilder.UserResetPasswordFn = func(token string, email string) {
 ```
 
 
-
-
-## HTTP
-
-
 To http handlers works you need config your URLs, login2 has URL type:
 
 ``` go
@@ -103,4 +98,4 @@ When login2 need send up user, login2 will send user to ```SignUp``` url.
 TODO: ResetPasswordSuccess
 
 
-
+See [Doc](http://godoc.org/github.com/dukex/login2)
