@@ -125,10 +125,10 @@ func (b *Builder) Router(r *mux.Router) {
 
 // OAuthAuthorize To authorize user on defined provider. Send provider name as params and method will return http handle
 //
-// ```
-// GET   /auth/google     loginBuilder.OAuthAuthorize("google")
-// GET   /auth/facebook   loginBuilder.OAuthAuthorize("facebook")
-// ```
+//	```
+//	GET   /auth/google     loginBuilder.OAuthAuthorize("google")
+//	GET   /auth/facebook   loginBuilder.OAuthAuthorize("facebook")
+//	```
 func (b *Builder) OAuthAuthorize(provider string) func(http.ResponseWriter, *http.Request) {
 	config := b.Providers[provider]
 
@@ -178,9 +178,9 @@ func (b *Builder) OAuthCallback(provider string, r *http.Request) (int64, error)
 
 // SignUp Hanlder to sign up user, send a http POST with email and password params on body
 //
-// ```
-// POST   /users/sign_up   SignUp
-// ```
+//	```
+// 	POST   /users/sign_up   SignUp
+// 	```
 func (b *Builder) SignUp() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, request *http.Request) {
 		email := request.FormValue("email")
@@ -202,9 +202,9 @@ func (b *Builder) SignUp() func(http.ResponseWriter, *http.Request) {
 
 // SignIn Handler to sign in user, send a http POST with email and password params on body
 //
-// ```
-// POST   /users/sign_in   SignIn
-// ```
+//	```
+//	POST   /users/sign_in   SignIn
+//	```
 func (b *Builder) SignIn() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
@@ -227,9 +227,9 @@ func (b *Builder) SignIn() func(http.ResponseWriter, *http.Request) {
 
 // SignOut Handler Method to sign out user, send a http GET
 //
-// ```
-// GET   /users/sign_out   SignOut
-// ```
+//	```
+//	GET   /users/sign_out   SignOut
+//	```
 func (b *Builder) SignOut() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := store.Get(r, "_session")
@@ -242,9 +242,9 @@ func (b *Builder) SignOut() func(http.ResponseWriter, *http.Request) {
 
 // Protected to be used on protected path, send the original http handle as params and if user is logged Protected will pass user to original handler else Protected will save URL and send user to Sign In. Protected send as first params the user id.
 //
-// ```
-// GET   /dashboard   Protected(DashboardHandle)
-// ```
+//	```
+//	GET   /dashboard   Protected(DashboardHandle)
+//	```
 func (b *Builder) Protected(fn func(string, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := b.CurrentUser(r)
