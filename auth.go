@@ -58,6 +58,48 @@ type URLS struct {
 }
 
 // Builder is the app configuration, store providers and callbacks
+//
+// Follow the callbacks documentation:
+//
+// ### UserSetupFn
+//
+// 	``` go
+// 	UserSetupFn         func(provider string, user *login2.User, rawResponse *http.Response) (int64, error)
+// 	```
+//
+// Called when user return from oauth provider, this method will send a provider
+// origin as string, some user information as ```login2.User``` and the raw
+// response from origin(login2 will make a request to ``` UserInfoURL```
+// configured on provider config). To sign in user the method expect the user
+// id as int64
+//
+//
+// ### UserCreateFn
+// 	``` go
+// 	UserCreateFn        func(email string, password string, request *http.Request) (int64, error)
+// 	```
+//
+// Called when user sign up by email/password, the method will send email and password as string, password // is encrypted hash, and expect the user id as int64
+//
+// ### UserIdByEmail
+// 	``` go
+// 	UserIdByEmail       func(email string) (int64, error)
+// 	```
+//
+// Called when user sign in by email/password to get the user id by email after check the password with ```UserPasswordByEmail```, the method will send the user email as string and expect the user id as int64
+//
+// ### UserPasswordByEmail
+// 	``` go
+// 	UserPasswordByEmail func(email string) (string, bool)
+// 	```
+//
+// Called when user sign in by email/password to get user password and check with inputed password, the method will send user email as string and expect the user password as string
+//
+// ### UserResetPasswordFn
+// 	``` go
+// 	UserResetPasswordFn func(token string, email string)
+// 	```
+// TODO
 type Builder struct {
 	Providers           map[string]*builderConfig
 	UserSetupFn         func(provider string, user *User, rawResponde *http.Response) (int64, error)
