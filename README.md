@@ -105,67 +105,9 @@ UserResetPasswordFn func(token string, email string)
 ```
 TODO
 
-## CurrentUser
-
-CurrentUser func expect you send the request(```http.Request```) and return the user id as string and bool true if is OK
-
-``` go
-(b *Builder) CurrentUser(r *http.Request) (string, bool)
-```
-
 
 ## HTTP
 
-Login2 provide some http handlers
-
-#### OAuthAuthorize(provider string) func(http.ResponseWriter, *http.Request)
-
-To authorize user on defined provider. Send provider name as params and method will return http handle
-
-```
-GET   /auth/google     loginBuilder.OAuthAuthorize("google")
-GET   /auth/facebook   loginBuilder.OAuthAuthorize("facebook")
-```
-
-#### OAuthLogin(provider string) func(http.ResponseWriter, *http.Request)
-
-The oauth endpoint callback, configured on provider, Send provider name as params and method will return http handle
-
-```
-GET   /auth/callback/google     loginBuilder.OAuthLogin("google")
-GET   /auth/callback/facebook   loginBuilder.OAuthLogin("facebook")
-```
-
-#### SignUp() func(http.ResponseWriter, *http.Request)
-
-Method to sign up user, send a http POST with email and password params on body
-
-```
-POST   /users/sign_up   SignUp
-```
-
-
-#### SignIn() func(http.ResponseWriter, *http.Request)
-Method to sign in user, send a http POST with email and password params on body
-
-```
-POST   /users/sign_in   SignIn
-```
-
-#### SignOut() func(http.ResponseWriter, *http.Request)
-Method to sign out user, send a http GET
-
-```
-GET   /users/sign_out   SignOut
-```
-
-#### Protected(fn func(string, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request)
-
-Method to use on protected path, send the original http handle as params and if user is logged Protected will pass user to original handler else Protected will save URL and send user to Sign In. Protected send as first params the user id.
-
-```
-GET   /dashboard   Protected(DashboardHandle)
-```
 
 To http handlers works you need config your URLs, login2 has URL type:
 
@@ -196,6 +138,5 @@ When login2 need send up user, login2 will send user to ```SignUp``` url.
 
 TODO: ResetPasswordSuccess
 
-##### Getting Errors
-TODO
+
 
