@@ -61,7 +61,7 @@ type URLS struct {
 //
 // Follow the callbacks documentation:
 //
-// 	UserSetupFn         func(provider string, user *login2.User, rawResponse *http.Response) (int64, error)
+//	UserSetupFn         func(provider string, user *login2.User, rawResponse *http.Response) (int64, error)
 //
 // Called when user return from oauth provider, this method will send a provider
 // origin as string, some user information as ```login2.User``` and the raw
@@ -70,24 +70,24 @@ type URLS struct {
 // id as int64
 //
 //
-// 	UserCreateFn        func(email string, password string, request *http.Request) (int64, error)
+//	UserCreateFn        func(email string, password string, token string, request *http.Request) (int64, error)
 //
 // Called when user sign up by email/password, the method will send email and password as string, password // is encrypted hash, and expect the user id as int64
 //
-// 	UserIdByEmail       func(email string) (int64, error)
+//	UserIdByEmail       func(email string) (int64, error)
 //
 // Called when user sign in by email/password to get the user id by email after check the password with ```UserPasswordByEmail```, the method will send the user email as string and expect the user id as int64
 //
-// 	UserPasswordByEmail func(email string) (string, bool)
+//	UserPasswordByEmail func(email string) (string, bool)
 //
 // Called when user sign in by email/password to get user password and check with inputed password, the method will send user email as string and expect the user password as string
 //
-// 	UserResetPasswordFn func(token string, email string)
+//	UserResetPasswordFn func(token string, email string)
 // TODO
 type Builder struct {
 	Providers           map[string]*builderConfig
 	UserSetupFn         func(provider string, user *User, rawResponde *http.Response) (int64, error)
-	UserCreateFn        func(email string, password string, request *http.Request) (int64, error)
+	UserCreateFn        func(email string, password string, token string, request *http.Request) (int64, error)
 	UserResetPasswordFn func(token string, email string)
 	UserIdByEmail       func(email string) (int64, error)
 	UserPasswordByEmail func(email string) (string, bool)
@@ -103,6 +103,7 @@ type User struct {
 	Gender  string
 	Locale  string
 	Picture string
+	Token   string
 }
 
 func NewBuilder() *Builder {
@@ -194,6 +195,7 @@ func (b *Builder) OAuthCallback(provider string, r *http.Request) (int64, error)
 
 	var user User
 	decoder := json.NewDecoder(responseAuth.Body)
+	user.Token = NewUserToken()
 	err := decoder.Decode(&user)
 	if err != nil {
 		panic(err)
@@ -205,19 +207,19 @@ func (b *Builder) OAuthCallback(provider string, r *http.Request) (int64, error)
 // SignUp Hanlder to sign up user, send a http POST with email and password params on body
 //
 //	```
-// 	POST   /users/sign_up   SignUp
-// 	```
+//	POST   /users/sign_up   SignUp
+//	```
 func (b *Builder) SignUp() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, request *http.Request) {
 		email := request.FormValue("email")
 		password := request.FormValue("password")
-		hpassword, err := GenerateHash(password)
+		hpassword, err := generateHash(password)
 		if err != nil {
 			http.Redirect(w, request, b.URLS.SignUp+"?password=error", http.StatusTemporaryRedirect)
 			return
 		}
 
-		userID, err := b.UserCreateFn(email, hpassword, request)
+		userID, err := b.UserCreateFn(email, hpassword, NewUserToken(), request)
 		if err != nil {
 			http.Redirect(w, request, b.URLS.SignIn+"?user=exists", http.StatusTemporaryRedirect)
 		} else {
@@ -292,8 +294,7 @@ func (b *Builder) SetReturnTo(w http.ResponseWriter, r *http.Request, url string
 func (b *Builder) ResetPassword() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
-		hash, _ := GenerateHash(strconv.Itoa(int(generateToken())))
-		token := base64.URLEncoding.EncodeToString([]byte(hash))
+		token := NewUserToken()
 		go b.UserResetPasswordFn(token, email)
 		http.Redirect(w, r, b.URLS.ResetPasswordSuccess, http.StatusTemporaryRedirect)
 	}
@@ -333,7 +334,7 @@ func (b *Builder) CurrentUser(r *http.Request) (id string, ok bool) {
 }
 
 // GenerateHash wrapper to bcrypt.GenerateFromPassword
-func GenerateHash(data string) (string, error) {
+func generateHash(data string) (string, error) {
 	h, err := bcrypt.GenerateFromPassword([]byte(data), 0)
 	return string(h[:]), err
 }
@@ -342,7 +343,12 @@ func checkHash(hashed, plain string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain))
 }
 
-func generateToken() int64 {
+func generateRandomToken() int64 {
 	rand.Seed(time.Now().Unix())
 	return rand.Int63()
+}
+
+func NewUserToken() string {
+	hash, _ := generateHash(strconv.Itoa(int(generateRandomToken())))
+	return base64.URLEncoding.EncodeToString([]byte(hash))
 }
