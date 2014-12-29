@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"code.google.com/p/go.crypto/bcrypt"
@@ -89,7 +90,8 @@ type Builder struct {
 	UserSetupFn         func(provider string, user *User, rawResponde *http.Response) (int64, error)
 	UserCreateFn        func(email string, password string, token string, request *http.Request) (int64, error)
 	UserResetPasswordFn func(token string, email string)
-	UserIdByEmail       func(email string) (int64, error)
+	UserIdByEmail       func(email string) (int64, error) // TODO: use bool as second params
+	UserIdByToken       func(token string) (int64, bool)
 	UserPasswordByEmail func(email string) (string, bool)
 	LoginFn             func(userId string)
 	URLS                URLS
@@ -106,7 +108,7 @@ type User struct {
 	Token   string
 }
 
-func NewBuilder() *Builder {
+func NewBuilder() *Builder { // TODO: changes to NewAuth
 	builder := new(Builder)
 	builder.Providers = make(map[string]*builderConfig, 0)
 	return builder
@@ -335,6 +337,20 @@ func (b *Builder) CurrentUser(r *http.Request) (id string, ok bool) {
 	session, _ := store.Get(r, "_session")
 	userId := session.Values["user_id"]
 	id, ok = userId.(string)
+	if !ok {
+		id, ok = b.getUserIdByAuthorizationToken(r)
+	}
+	return
+}
+
+func (b *Builder) getUserIdByAuthorizationToken(r *http.Request) (id string, ok bool) {
+	tokenAuthorization := strings.Split(r.Header.Get("Authorization"), " ")
+	if len(tokenAuthorization) == 2 {
+		var _id int64
+		_id, ok = b.UserIdByToken(tokenAuthorization[1])
+		id = strconv.Itoa(int(_id))
+		return
+	}
 	return
 }
 
