@@ -260,8 +260,7 @@ func (b *Builder) SignIn() func(http.ResponseWriter, *http.Request) {
 //	```
 func (b *Builder) SignOut() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, _ := store.Get(r, "_session")
-		session.Values["user_id"] = nil
+		session := b.Logout(r)
 		session.Save(r, w)
 
 		http.Redirect(w, r, b.URLS.SignIn, http.StatusTemporaryRedirect)
@@ -303,6 +302,12 @@ func (b *Builder) ResetPassword() func(http.ResponseWriter, *http.Request) {
 func (b *Builder) Login(r *http.Request, userId string) *sessions.Session {
 	session, _ := store.Get(r, "_session")
 	session.Values["user_id"] = userId
+	return session
+}
+
+func (b *Builder) Logout(r *http.Request) *sessions.Session {
+	session, _ := store.Get(r, "_session")
+	session.Values["user_id"] = nil
 	return session
 }
 
