@@ -128,7 +128,6 @@ func (b *Builder) NewProvider(p *Provider) {
 		Scope:        p.Scope,
 		AuthURL:      p.AuthURL,
 		TokenURL:     p.TokenURL,
-		TokenCache:   oauth.CacheFile("cache-" + p.Name + ".json"),
 	}
 
 	provider := new(builderConfig)
