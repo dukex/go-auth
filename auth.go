@@ -16,7 +16,6 @@ import (
 
 	"code.google.com/p/go.crypto/bcrypt"
 	"code.google.com/p/goauth2/oauth"
-	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )
 
@@ -135,18 +134,6 @@ func (b *Builder) NewProvider(p *Provider) {
 	provider.UserInfoURL = p.UserInfoURL
 
 	b.Providers[p.Name] = provider
-}
-
-func (b *Builder) Router(r *mux.Router) {
-	for provider, _ := range b.Providers {
-		r.HandleFunc("/auth/"+provider, b.OAuthAuthorize(provider)).Methods("GET")
-		r.HandleFunc("/auth/callback/"+provider, b.OAuthLogin(provider)).Methods("GET")
-	}
-
-	r.HandleFunc("/users/sign_in", b.SignIn()).Methods("POST")
-	r.HandleFunc("/users/sign_up", b.SignUp()).Methods("POST")
-	r.HandleFunc("/users/sign_out", b.SignOut()).Methods("GET")
-	r.HandleFunc("/password/reset", b.ResetPassword()).Methods("POST")
 }
 
 // HTTP server
