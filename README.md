@@ -2,6 +2,13 @@
 
 Easy way to sign in and sign up users using oauth and email/password
 
+``` sh
+$ go get gopkg.in/dukex/login2.v1
+```
+
+``` go
+import "gopkg.in/dukex/login2.v1"
+```
 
 ``` go
 var loginBuilder *login2.Builder
