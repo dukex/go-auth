@@ -1,7 +1,6 @@
-// Package auth provides sign in and sign up by oauth2 and email and password.
+// This auth provides sign in and sign up by oauth2 and email/password.
 // Inspired in omniauth and devise gem
-//
-package authenticator
+package auth
 
 import (
 	"os"

@@ -1,4 +1,4 @@
-package authenticator
+package auth
 
 // UserHelper interface has some important method to auth works
 //
@@ -21,23 +21,3 @@ type UserHelper interface {
 	//FindByToken(token string) (int64, bool)
 	//Login(userId int64)
 }
-
-// Follow the iser helper documentation:
-//
-//	UserSetupFn         func(provider string, user *login2.User, rawResponse *http.Response) (int64, error)
-//
-// Called when user return from oauth provider, this method will send a provider
-// origin as string, some user information as ```login2.User``` and the raw
-// response from origin(login2 will make a request to ``` UserInfoURL```
-// configured on provider config). To sign in user the method expect the user
-// id as int64
-//
-//
-//	UserCreateFn        func(email string, password string, token string, request *http.Request) (int64, error)
-//
-// Called when user sign up by email/password, the method will send email and password as string, password // is encrypted hash, and expect the user id as int64
-//
-//	UserIdByEmail       func(email string) (int64, error)
-//
-// Called when user sign in by email/password to get the user id by email after check the password with ```UserPasswordByEmail```, the method will send the user email as string and expect the user id as int64
-//

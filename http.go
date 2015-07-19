@@ -1,4 +1,4 @@
-package authenticator
+package auth
 
 import (
 	"encoding/json"
@@ -15,11 +15,11 @@ type emailPasswordParams struct {
 // Authorize is a middleware to authorize user in a defined provider.
 // Send provider name as params and the return is a http handle
 //
-//	```
+//
 //	GET   /auth/google     auth.Authorize("google")
 //	GET   /auth/facebook   auth.Authorize("facebook")
 //	POST  /sign_in         auth.Authorize("email")
-//	```
+//
 func (a *Auth) Authorize(providerName string) http.HandlerFunc {
 	provider := a.Providers[providerName]
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -45,8 +45,9 @@ func (a *Auth) oauthAuthorize(provider *builderConfig, w http.ResponseWriter, r 
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-// HTTP Handler to Sign In users
-// has expected email,password in request body as JSON
+// HTTP Handler to sign in users is expected email and password in request body as JSON
+//
+//	{"email": "myemail@domain.com", "password": "abc123"}
 func (a *Auth) SignIn(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var params emailPasswordParams
