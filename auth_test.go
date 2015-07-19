@@ -2,22 +2,14 @@ package auth
 
 import (
 	"bytes"
-	"io"
+	"log"
 	"net/http"
-	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	. "gopkg.in/check.v1"
 )
-
-func httpTest(handle http.HandlerFunc, method string, body io.Reader) *httptest.ResponseRecorder {
-	r, _ := http.NewRequest(method, "", body)
-
-	w := httptest.NewRecorder()
-	handle.ServeHTTP(w, r)
-	return w
-}
 
 func Test(t *testing.T) { TestingT(t) }
 
@@ -42,70 +34,52 @@ func (s *AuthSuite) TestAuthorizerOAuthRedirect(c *C) {
 	auth := NewAuth()
 	auth.NewProvider(provider)
 
-	r := httpTest(auth.Authorize("facebook"), "GET", nil)
+	r := httpTest(auth.Authorize("facebook"), "GET", nil, "")
 	c.Assert(r.Header().Get("Location"), Equals, providerRedirectTo)
 }
 
 func (s *AuthSuite) TestNotFoundAuthorizerConfigured(c *C) {
 	auth := NewAuth()
 
-	r := httpTest(auth.Authorize("facebook"), "GET", nil)
+	r := httpTest(auth.Authorize("facebook"), "GET", nil, "")
 
 	c.Assert(r.Code, Equals, http.StatusNotFound)
 	c.Assert(r.Body.String(), Equals, "Provider 'facebook' not found")
 }
 
-type helper struct {
-	mock.Mock
-}
-
-func (h *helper) PasswordByEmail(email string) (string, bool) {
-	args := h.Called(email)
-	return args.String(0), args.Bool(1)
-}
-
-func (h *helper) FindUserDataByEmail(email string) (string, bool) {
-	args := h.Called(email)
-	return args.String(0), args.Bool(1)
-}
-
-func mockHelper() *helper {
-	return new(helper)
-}
-
 func (s *AuthSuite) TestAuthorizerEmailPasswordProvider(c *C) {
 	auth := NewAuth()
 	auth.NewProvider(EmailPasswordProvider)
-	r := httpTest(auth.Authorize(EmailPasswordProvider.Name), "GET", nil)
+	r := httpTest(auth.Authorize(EmailPasswordProvider.Name), "GET", nil, "")
 	c.Assert(r.Code, Equals, http.StatusNotFound)
 }
 
 func (s *AuthSuite) TestAuthorizerEmailPasswordProviderNotFoundUser(c *C) {
-	h := mockHelper()
+	h := mockUserHelper()
 	auth := NewAuth()
 	auth.NewProvider(EmailPasswordProvider)
 	auth.Helper = h
 	h.On("PasswordByEmail", "duke@br.com").Return("", false)
 	var authData = []byte(`{"email":"duke@br.com", "password":"abc123"}`)
-	r := httpTest(auth.Authorize(EmailPasswordProvider.Name), "POST", bytes.NewBuffer(authData))
+	r := httpTest(auth.Authorize(EmailPasswordProvider.Name), "POST", bytes.NewBuffer(authData), "")
 	c.Assert(r.Code, Equals, http.StatusForbidden)
 	h.AssertExpectations(c)
 }
 
 func (s *AuthSuite) TestAuthorizerEmailPasswordProviderPasswordDontMatch(c *C) {
-	h := mockHelper()
+	h := mockUserHelper()
 	auth := NewAuth()
 	auth.NewProvider(EmailPasswordProvider)
 	auth.Helper = h
 	h.On("PasswordByEmail", "duke@br.com").Return("x", true)
 	var authData = []byte(`{"email":"duke@br.com", "password":"abc123"}`)
-	r := httpTest(auth.Authorize(EmailPasswordProvider.Name), "POST", bytes.NewBuffer(authData))
+	r := httpTest(auth.Authorize(EmailPasswordProvider.Name), "POST", bytes.NewBuffer(authData), "")
 	c.Assert(r.Code, Equals, http.StatusForbidden)
 	h.AssertExpectations(c)
 }
 
 func (s *AuthSuite) TestAuthorizerEmailPasswordProviderSignInAndReturnsUser(c *C) {
-	h := mockHelper()
+	h := mockUserHelper()
 	auth := NewAuth()
 	auth.NewProvider(EmailPasswordProvider)
 	auth.Helper = h
@@ -115,14 +89,40 @@ func (s *AuthSuite) TestAuthorizerEmailPasswordProviderSignInAndReturnsUser(c *C
 	h.On("PasswordByEmail", "duke@br.com").Return(hashed, true)
 	h.On("FindUserDataByEmail", "duke@br.com").Return("{user}", true)
 	var authData = []byte("{\"email\":\"duke@br.com\", \"password\":\"" + password + "\"}")
-	r := httpTest(auth.Authorize(EmailPasswordProvider.Name), "POST", bytes.NewBuffer(authData))
+	r := httpTest(auth.Authorize(EmailPasswordProvider.Name), "POST", bytes.NewBuffer(authData), "")
 	c.Assert(r.Code, Equals, http.StatusOK)
 	c.Assert(r.Body.String(), Equals, "{user}")
 	h.AssertExpectations(c)
 }
 
-func TestSignUp(t *testing.T) {
+func (s *AuthSuite) TestOAuthCallbackWithoutCode(c *C) {
+	// provider := Provider{Name: "facebook", Key: "CsE34", Secret: "Aeee", Scope: "email"}
 
+	// auth := NewAuth()
+	// auth.NewProvider(provider)
+
+	// r := httpTest(auth.OAuthCallback("facebook"), "POST", nil, "application/x-www-form-urlencoded")
+	// c.Assert(r.Code, Equals, http.StatusBadRequest)
+}
+
+func (s *AuthSuite) TestOAuthCallback(c *C) {
+	oauthServer := mockHTTP(func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r.URL)
+		w.WriteHeader(200)
+		w.Write([]byte(`{"access_token": "abc123", "refresh_token": "323", "expires_in": 0}`))
+	})
+
+	provider := Provider{Name: "facebook", UserInfoURL: oauthServer.URL, TokenURL: oauthServer.URL + "/token"}
+	auth := NewAuth()
+	auth.NewProvider(provider)
+
+	data := url.Values{}
+	data.Set("code", "123")
+	r := httpTest(auth.OAuthCallback("facebook"), "POST", strings.NewReader(data.Encode()), "application/x-www-form-urlencoded")
+	c.Assert(r.Code, Equals, http.StatusOK)
+}
+
+func TestSignUp(t *testing.T) {
 }
 
 //

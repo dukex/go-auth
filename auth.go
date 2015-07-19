@@ -22,43 +22,6 @@ func NewAuth() *Auth {
 	return auth
 }
 
-// // OAuthLogin	The oauth endpoint callback, configured on provider, Send provider name as params and method will return http handle
-// //
-// //	```
-// //	GET   /auth/callback/google     loginBuilder.OAuthLogin("google")
-// //	GET   /auth/callback/facebook   loginBuilder.OAuthLogin("facebook")
-// //	```
-// func (b *Builder) OAuthLogin(provider string) func(http.ResponseWriter, *http.Request) {
-// 	return func(w http.ResponseWriter, request *http.Request) {
-// 		userId, err := b.OAuthCallback(provider, request)
-//
-// 		if err != nil {
-// 			http.Redirect(w, request, b.URLS.SignIn, http.StatusTemporaryRedirect)
-// 		} else {
-// 			b.login(request, w, strconv.FormatInt(userId, 10))
-// 		}
-// 	}
-// }
-//
-// // OAuthCallback receive code params from provider and get user information
-// func (b *Builder) OAuthCallback(provider string, r *http.Request) (int64, error) {
-// 	config := b.Providers[provider]
-// 	code := r.FormValue("code")
-// 	t := &oauth.Transport{Config: config.Auth}
-// 	t.Exchange(code)
-// 	responseAuth, _ := t.Client().Get(config.UserInfoURL)
-// 	defer responseAuth.Body.Close()
-//
-// 	var user User
-// 	decoder := json.NewDecoder(responseAuth.Body)
-// 	user.Token = NewUserToken()
-// 	err := decoder.Decode(&user)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-//
-// 	return b.UserSetupFn(provider, &user, responseAuth)
-// }
 //
 // // SignUp Hanlder to sign up user, send a http POST with email and password params on body
 // //
