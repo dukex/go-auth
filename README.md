@@ -1,18 +1,20 @@
-# Login2
+# Go Auth
 
 Easy way to sign in and sign up users using oauth and email/password
 
+See [Doc](http://godoc.org/github.com/dukex/go-auth)
+
+The master version is a Work in Progress, use v1 instead
 ``` sh
-$ go get gopkg.in/dukex/login2.v1
+$ go get gopkg.in/dukex/go-auth.v1
 ```
 
 ``` go
-import "gopkg.in/dukex/login2.v1"
+import authenticator "gopkg.in/dukex/go-auth.v1"
 ```
 
 ``` go
-var loginBuilder *login2.Builder
-loginBuilder = login2.NewBuilder()
+loginBuilder := authenticator.NewBuilder()
 ```
 
 ## Config
@@ -20,7 +22,7 @@ loginBuilder = login2.NewBuilder()
 To config your oauth provider use ```NewProvider``` func
 
 ``` go
-provider := &login2.Provider{
+provider := &authenticator.Provider{
   RedirectURL: os.Getenv("GOOGLE_CALLBACK_URL"),
   AuthURL:     "https://accounts.google.com/o/oauth2/auth",
   TokenURL:    "https://accounts.google.com/o/oauth2/token",
@@ -38,9 +40,9 @@ The func ```NewProviders``` accept a ```Provider``` array
 
 
 ``` go
-providers := make([]*login2.Provider, 0)
+providers := make([]*authenticator.Provider, 0)
 
-providers = append(providers, &auth.Provider{
+providers = append(providers, &authenticator.Provider{
   RedirectURL: os.Getenv("GOOGLE_CALLBACK_URL"),
   AuthURL:     "https://accounts.google.com/o/oauth2/auth",
   TokenURL:    "https://accounts.google.com/o/oauth2/token",
@@ -89,7 +91,7 @@ type URLS struct {
 And ```Builder``` has URLS field
 
 ``` go
-loginBuilder.URLS = login2.URLS{
+loginBuilder.URLS = authenticator.URLS{
   Redirect: "/dashbaord",
   SignIn:    "/login",
   SignUp:  "/register",
@@ -103,6 +105,3 @@ When login2 need sign in user, e.g User trying access protected path, login2 wil
 When login2 need send up user, login2 will send user to ```SignUp``` url.
 
 TODO: ResetPasswordSuccess
-
-
-See [Doc](http://godoc.org/github.com/dukex/login2)
