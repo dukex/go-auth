@@ -139,7 +139,39 @@ func (s *AuthSuite) TestOAuthCallback(c *C) {
 	c.Assert(r.Code, Equals, http.StatusOK)
 }
 
-func TestSignUp(t *testing.T) {
+func (s *AuthSuite) TestCurrentUserHTTPToken(c *C) {
+	h := mockUserHelper()
+	auth := NewAuth()
+	auth.Helper = h
+
+	token := "Th3us3rTok3n"
+
+	h.On("FindUserByToken", token).Return("id1234", true)
+
+	handle := func() http.HandlerFunc { return func(w http.ResponseWriter, r *http.Request) {} }()
+	r, _ := http.NewRequest("GET", "", nil)
+	r.Header.Add("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	handle.ServeHTTP(w, r)
+
+	user, ok := auth.CurrentUser(r)
+	c.Assert(ok, Equals, true)
+	c.Assert(user, Equals, "id1234")
+}
+
+func (s *AuthSuite) TestCurrentUserHTTPNotToken(c *C) {
+	h := mockUserHelper()
+	auth := NewAuth()
+	auth.Helper = h
+
+	handle := func() http.HandlerFunc { return func(w http.ResponseWriter, r *http.Request) {} }()
+	r, _ := http.NewRequest("GET", "", nil)
+	w := httptest.NewRecorder()
+	handle.ServeHTTP(w, r)
+
+	user, ok := auth.CurrentUser(r)
+	c.Assert(ok, Equals, false)
+	c.Assert(user, Equals, "")
 }
 
 //
