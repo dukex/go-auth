@@ -2,13 +2,7 @@
 // Inspired in omniauth and devise gem
 package auth
 
-import (
-	"os"
-
-	"github.com/gorilla/sessions"
-)
-
-var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+// var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 
 // Auth is the Authentication config, this store providers and UserHelper interface
 type Auth struct {

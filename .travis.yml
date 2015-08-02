@@ -1,5 +1,8 @@
 language: go
 
+before_script:
+  - go get
+
 go:
   - 1.3
   - tip
