@@ -4,10 +4,15 @@ import (
 	"encoding/base64"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/sessions"
 )
+
+var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 
 // UserHelper interface has some important method to auth works
 //
@@ -44,6 +49,12 @@ func generateRandomToken() int64 {
 func NewUserToken() string {
 	hash, _ := GenerateHash(strconv.Itoa(int(generateRandomToken())))
 	return base64.URLEncoding.EncodeToString([]byte(hash))
+}
+
+func (a *Auth) Login(r *http.Request, userId string) *sessions.Session {
+	session, _ := store.Get(r, "_session")
+	session.Values["user_id"] = userId
+	return session
 }
 
 type User struct {
