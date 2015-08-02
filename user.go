@@ -37,6 +37,9 @@ func (a *Auth) CurrentUser(r *http.Request) (id string, ok bool) {
 	tokenAuthorization := strings.Split(r.Header.Get("Authorization"), " ")
 	if len(tokenAuthorization) == 2 {
 		id, ok = a.Helper.FindUserByToken(tokenAuthorization[1])
+	} else {
+		session, _ := store.Get(r, "_session")
+		id, ok = session.Values["user_id"].(string)
 	}
 	return
 }
