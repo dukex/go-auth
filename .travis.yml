@@ -1,7 +1,10 @@
 language: go
 
 before_script:
+  - go get gopkg.in/check.v1
+  - go get github.com/stretchr/testify/mock
   - go get
+
 
 go:
   - 1.3
