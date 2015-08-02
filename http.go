@@ -55,18 +55,32 @@ func (a *Auth) SignIn(w http.ResponseWriter, r *http.Request) {
 	var params emailPasswordParams
 	decoder.Decode(&params) // TODO: test error here
 
+	if params.Email == "" || params.Password == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	foundPassword, wasFound := a.Helper.PasswordByEmail(params.Email)
 	if !wasFound {
 		w.WriteHeader(http.StatusForbidden)
+		return
 	}
 
 	err := checkHash(foundPassword, params.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
-	} else {
-		user, _ := a.Helper.FindUserDataByEmail(params.Email)
-		w.Write([]byte(user))
+		return
 	}
+
+	user, ok := a.Helper.FindUserDataByEmail(params.Email)
+
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(user))
 }
 
 // The oauth endpoint callback, configured on provider, Send provider name as params
