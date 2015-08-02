@@ -1,5 +1,14 @@
 package auth
 
+import (
+	"encoding/base64"
+	"math/rand"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+)
+
 // UserHelper interface has some important method to auth works
 //
 // PasswordByEmail func(email string) (string, bool)

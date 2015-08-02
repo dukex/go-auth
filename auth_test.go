@@ -2,11 +2,13 @@ package auth
 
 import (
 	"bytes"
-	"log"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/mock"
 
 	. "gopkg.in/check.v1"
 )
@@ -18,17 +20,18 @@ type AuthSuite struct{}
 var _ = Suite(&AuthSuite{})
 
 func (s *AuthSuite) TestNewAuth(c *C) {
-	providers := []Provider{Provider{Name: "Duke", Key: "CsE34", Secret: "Aeee", Scope: "email", RedirectURL: "/d"}}
+	providers := []Provider{Provider{Name: "Duke", Key: "CsE34", Secret: "Aeee", Scopes: []string{"email"}, RedirectURL: "/d"}}
+
 	auth := NewAuth()
 	auth.NewProviders(providers)
 
 	client := *auth.Providers["Duke"]
 
-	c.Assert(client.Auth.ClientId, Equals, providers[0].Key)
+	c.Assert(client.Auth.ClientID, Equals, providers[0].Key)
 }
 
 func (s *AuthSuite) TestAuthorizerOAuthRedirect(c *C) {
-	provider := Provider{Name: "facebook", Key: "CsE34", Secret: "Aeee", Scope: "email", RedirectURL: "/d"}
+	provider := Provider{Name: "facebook", Key: "CsE34", Secret: "Aeee", Scopes: []string{"email"}, RedirectURL: "/d"}
 	providerRedirectTo := "/?client_id=CsE34&redirect_uri=%2Fd&response_type=code&scope=email"
 
 	auth := NewAuth()
@@ -107,18 +110,32 @@ func (s *AuthSuite) TestOAuthCallbackWithoutCode(c *C) {
 
 func (s *AuthSuite) TestOAuthCallback(c *C) {
 	oauthServer := mockHTTP(func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.URL)
 		w.WriteHeader(200)
-		w.Write([]byte(`{"access_token": "abc123", "refresh_token": "323", "expires_in": 0}`))
+		if r.URL.String() == "/token" {
+			w.Write([]byte("access_token=90d64460d14870c08c81352a05dedd3465940a7c&scope=user&token_type=bearer"))
+		} else {
+			w.Write([]byte(`{"name": "Test"}`))
+		}
 	})
+
+	h := mockUserHelper()
 
 	provider := Provider{Name: "facebook", UserInfoURL: oauthServer.URL, TokenURL: oauthServer.URL + "/token"}
 	auth := NewAuth()
 	auth.NewProvider(provider)
+	auth.Helper = h
 
 	data := url.Values{}
 	data.Set("code", "123")
-	r := httpTest(auth.OAuthCallback("facebook"), "POST", strings.NewReader(data.Encode()), "application/x-www-form-urlencoded")
+
+	h.On("FindUserFromOAuth", "facebook", mock.AnythingOfType("*auth.User"), mock.AnythingOfType("*http.Response")).Return("e3123", nil)
+	handle := func(w http.ResponseWriter, r *http.Request) {
+		id, err := auth.OAuthCallback("facebook", w, r)
+		c.Assert(id, Equals, "e3123")
+		c.Assert(err, Not(NotNil))
+	}
+
+	r := httpTest(handle, "POST", strings.NewReader(data.Encode()), "application/x-www-form-urlencoded")
 	c.Assert(r.Code, Equals, http.StatusOK)
 }
 

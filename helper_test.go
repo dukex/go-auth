@@ -30,6 +30,16 @@ func (h *userHelper) FindUserDataByEmail(email string) (string, bool) {
 	return args.String(0), args.Bool(1)
 }
 
+func (h *userHelper) FindUserByToken(token string) (string, bool) {
+	args := h.Called(token)
+	return args.String(0), args.Bool(1)
+}
+
+func (h *userHelper) FindUserFromOAuth(provider string, user *User, r *http.Response) (string, error) {
+	args := h.Called(provider, user, r)
+	return args.String(0), args.Error(1)
+}
+
 func mockUserHelper() *userHelper {
 	return new(userHelper)
 }

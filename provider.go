@@ -1,6 +1,6 @@
 package auth
 
-import "code.google.com/p/goauth2/oauth"
+import oauth "golang.org/x/oauth2"
 
 // Provider is a oauth2 provider, like facebook or google
 // 	Name is the provider name, the package use it as a index.
@@ -19,7 +19,7 @@ type Provider struct {
 	TokenURL    string
 	AuthURL     string
 	UserInfoURL string
-	Scope       string
+	Scopes      []string
 }
 
 // Email/Password default provider
@@ -41,12 +41,14 @@ func (b *Auth) NewProviders(providers []Provider) {
 
 func (a *Auth) NewProvider(p Provider) {
 	config := &oauth.Config{
-		ClientId:     p.Key,
+		ClientID:     p.Key,
 		ClientSecret: p.Secret,
 		RedirectURL:  p.RedirectURL,
-		Scope:        p.Scope,
-		AuthURL:      p.AuthURL,
-		TokenURL:     p.TokenURL,
+		Scopes:       p.Scopes,
+		Endpoint: oauth.Endpoint{
+			AuthURL:  p.AuthURL,
+			TokenURL: p.TokenURL,
+		},
 	}
 
 	provider := new(builderConfig)
