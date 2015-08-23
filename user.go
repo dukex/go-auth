@@ -60,6 +60,12 @@ func (a *Auth) Login(r *http.Request, userId string) *sessions.Session {
 	return session
 }
 
+func (a *Auth) Logout(r *http.Request) *sessions.Session {
+	session, _ := store.Get(r, "_session")
+	session.Values["user_id"] = ""
+	return session
+}
+
 type User struct {
 	Id      string
 	Email   string
