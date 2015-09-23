@@ -4,6 +4,8 @@ Easy way to sign in and sign up users using oauth and email/password
 
 See [Doc](http://godoc.org/github.com/dukex/go-auth)
 
+## Donate to 1P8ccYhVt4ByLahuVXiCY6U185gmYA8Rqf
+
 The master version is a Work in Progress, use v1 instead
 ``` sh
 $ go get gopkg.in/dukex/go-auth.v1
