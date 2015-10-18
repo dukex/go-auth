@@ -27,7 +27,7 @@ var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 // Will be use to SignIn handler after user SignIn
 type UserHelper interface {
 	PasswordByEmail(email string) (string, bool)
-	FindUserDataByEmail(email string) (string, bool)
+	FindUserDataByEmail(email string) (string, string, bool)
 	FindUserByToken(token string) (string, bool)
 	FindUserFromOAuth(provider string, user *User, rawResponse *http.Response) (string, error)
 }

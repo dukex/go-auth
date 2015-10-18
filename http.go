@@ -50,37 +50,39 @@ func (a *Auth) oauthAuthorize(provider *builderConfig, w http.ResponseWriter, r 
 // HTTP Handler to sign in users is expected email and password in request body as JSON
 //
 //	{"email": "myemail@domain.com", "password": "abc123"}
-func (a *Auth) SignIn(w http.ResponseWriter, r *http.Request) {
+func (a *Auth) SignIn(w http.ResponseWriter, r *http.Request) (string, bool) {
 	decoder := json.NewDecoder(r.Body)
 	var params emailPasswordParams
 	decoder.Decode(&params) // TODO: test error here
 
 	if params.Email == "" || params.Password == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		return
+		return "", false
 	}
 
 	foundPassword, wasFound := a.Helper.PasswordByEmail(params.Email)
 	if !wasFound {
 		w.WriteHeader(http.StatusForbidden)
-		return
+		return "", false
 	}
 
 	err := checkHash(foundPassword, params.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
-		return
+		return "", false
 	}
 
-	user, ok := a.Helper.FindUserDataByEmail(params.Email)
+	user, id, ok := a.Helper.FindUserDataByEmail(params.Email)
 
 	if !ok {
 		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return "", false
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(user))
+
+	return id, true
 }
 
 // The oauth endpoint callback, configured on provider, Send provider name as params
