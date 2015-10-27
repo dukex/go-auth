@@ -27,12 +27,12 @@ func (a *Auth) Authorize(providerName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case provider == nil:
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("Provider '" + providerName + "' not found"))
 			return
 		case providerName == EmailPasswordProvider.Name:
 			if r.Method == "GET" {
-				w.WriteHeader(404)
+				w.WriteHeader(http.StatusNotFound)
 			} else {
 				a.SignIn(w, r)
 			}
@@ -68,7 +68,7 @@ func (a *Auth) SignIn(w http.ResponseWriter, r *http.Request) (string, bool) {
 
 	err := checkHash(foundPassword, params.Password)
 	if err != nil {
-		w.WriteHeader(http.StatusForbidden)
+		w.WriteHeader(http.StatusUnauthorized)
 		return "", false
 	}
 
