@@ -35,8 +35,12 @@ type UserHelper interface {
 // CurrentUser func expect you send the request(```http.Request```) and return the user id as string and bool true if is OK
 func (a *Auth) CurrentUser(r *http.Request) (id string, ok bool) {
 	tokenAuthorization := strings.Split(r.Header.Get("Authorization"), " ")
+	tokenQuery := r.URL.Query().Get("token")
+
 	if len(tokenAuthorization) == 2 {
 		id, ok = a.Helper.FindUserByToken(tokenAuthorization[1])
+	} else if tokenQuery != "" {
+		id, ok = a.Helper.FindUserByToken(tokenQuery)
 	} else {
 		session, _ := store.Get(r, "_session")
 		id, ok = session.Values["user_id"].(string)
